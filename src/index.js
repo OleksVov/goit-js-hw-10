@@ -1,17 +1,59 @@
-import './css/styles.css';
+import API from'./fetchCountries';
 import Notiflix from 'notiflix';
+import debounce from "lodash.debounce";
+import './css/styles.css';
 
 const DEBOUNCE_DELAY = 300;
 
 const refs = {
     input: document.querySelector('#search-box'),
-    list: document.querySelector('.country-list'),
-    box: document.querySelector('.country-info'),
+    countryList: document.querySelector('.country-list'),
+    countryInfo: document.querySelector('.country-info'),
 };
 
-// https://restcountries.com/v3.1/name/{name}
-// https://restcountries.com/v3.1/name/peru
+refs.input.addEventListener('input', debounce(onSearchCountry, DEBOUNCE_DELAY));
 
-function fetchCountries(name) {
-    
+
+function  onSearchCountry (event) {
+    event.preventDefault();
+
+    const countryName = refs.input.value.trim();
+    console.log(countryName);
+
+    API.fetchCountries(countryName)
+    .then(renderCountryCards)
+    .catch(onFetchError)
+    .finally();
 }
+
+
+function renderCountryCards (countries) {
+    console.log(countries.length);
+    if (countries.length >= 2 && countries.length <= 10) {
+        const markupList = countries.map(country => {
+        return `<li><img src="${country.flags.svg}" alt="${country.name.official}" width=24px/> ${country.name.official}</li>`
+    }).join("");
+    refs.countryList.innerHTML = markupList;}
+
+    if (countries.length === 1) {const markup = countries.map(country => {
+        return `<h2><img src="${country.flags.svg}" alt="${country.name.official}" width=24px/> ${country.name.official}</h2>
+        <p><b>Capital:</b> ${country.capital}</p>
+        <p><b>Population:</b> ${country.population}</p>
+        <p><b>Languages:</b> ${Object.values(country.languages).join(", ")}</p>
+        `;
+    })
+.join("");
+refs.countryInfo.innerHTML = markup;}
+
+if (countries.length > 10) {
+    Notiflix.Notify.info("Too many matches found. Please enter a more specific name.");
+}
+
+    
+};
+
+
+function onFetchError(error) {
+    Notiflix.Notify.failure("Oops, there is no country with that name");
+}
+
