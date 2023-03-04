@@ -17,25 +17,22 @@ refs.input.addEventListener('input', debounce(onSearchCountry, DEBOUNCE_DELAY));
 function  onSearchCountry (event) {
     event.preventDefault();
 
-    const countryName = refs.input.value.trim();
-    console.log(countryName);
+    const countryName = event.target.value.trim();
 
     API.fetchCountries(countryName)
-    .then(renderCountryCards)
+    .then(countries => {
+        if (countries.length >= 2 && countries.length <=10) {
+            renderCountryList(countries)
+        } else if (countries.length === 1) {renderCountryCards(countries)}
+        else (Notiflix.Notify.info("Too many matches found. Please enter a more specific name."))
+    })
     .catch(onFetchError)
     .finally();
 }
 
 
 function renderCountryCards (countries) {
-    console.log(countries.length);
-    if (countries.length >= 2 && countries.length <= 10) {
-        const markupList = countries.map(country => {
-        return `<li><img src="${country.flags.svg}" alt="${country.name.official}" width=24px/> ${country.name.official}</li>`
-    }).join("");
-    refs.countryList.innerHTML = markupList;}
-
-    if (countries.length === 1) {const markup = countries.map(country => {
+    const markup = countries.map(country => {
         return `<h2><img src="${country.flags.svg}" alt="${country.name.official}" width=24px/> ${country.name.official}</h2>
         <p><b>Capital:</b> ${country.capital}</p>
         <p><b>Population:</b> ${country.population}</p>
@@ -43,14 +40,18 @@ function renderCountryCards (countries) {
         `;
     })
 .join("");
-refs.countryInfo.innerHTML = markup;}
-
-if (countries.length > 10) {
-    Notiflix.Notify.info("Too many matches found. Please enter a more specific name.");
-}
-
-    
+refs.countryInfo.innerHTML = markup;
 };
+
+
+function renderCountryList (countries) {
+  
+    const markup = countries.map(country => {
+        return `<li><img src="${country.flags.svg}" alt="${country.name.official}" width=24px/> ${country.name.official}</li>`;
+    })
+.join("");
+refs.countryInfo.innerHTML = markup;
+}
 
 
 function onFetchError(error) {
